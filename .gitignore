@@ -1,0 +1,6 @@
+*.asv
+*.m~
+*.DS_Store
+*.mex*
+data
+mytest
