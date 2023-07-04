@@ -1,7 +1,7 @@
-% clc; clear; close all;
+clc; clear; close all;
 % 
-% cvxpath = "../cvx";
-% addpath(genpath(cvxpath))
+cvxpath = "../cvx";
+addpath(genpath(cvxpath))
 
 m = 1; g = 9.8; l = 1; b = 0.1;
 A = [0, 1; 0, -b/(m*l^2)];
