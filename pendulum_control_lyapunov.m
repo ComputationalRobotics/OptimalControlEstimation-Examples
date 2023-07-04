@@ -20,7 +20,10 @@ x = [theta; theta_dot];
 x_hat = [theta_hat; theta_dot_hat];
 e = x_hat - x;
 z = [x;e];
+%syms z1 z2 z3 z4 real
+%z = [z1 z2 z3 z4]';
+%
 V = z'*z;
 gradient(V);
-Lf = dot(gradient(V),F*z);
-Lg = dot(gradient(V),G);
+Lf = (combine(dot(gradient(V),F*z)))
+Lg = (combine(dot(gradient(V),G)))
