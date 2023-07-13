@@ -9,11 +9,11 @@ m_c = 1; m_p = 1; l = 1; g = 9.8;
 ns = 6;
 ny = 4;
 
-gamma = 0.1;  % desired exponential rate
+gamma = 0.0;  % desired exponential rate
 deg_V = 2; % degree of Lyapunov function V
 deg_K = 2; % degree of observer gain
 kappa_plus = 0; % choose whether to go above the minimum relaxation order
-e_bound = 100; % error bound
+% e_bound = 100; % error bound % we cannot have bounds like this
 
 deg_Q = deg_V - 2;
 deg_M = deg_Q + deg_K;
@@ -35,8 +35,14 @@ h = [x(3)^2 + x(4)^2 - 1;
 
 % inequality constraints on x and e
 % note that I add g0 = 1
-g = [1;
-     -e'*e+e_bound^2];
+a_lb = 1 / (m_c/m_p + 1); % lower bound of a
+a_ub = 1 / (m_c/m_p); % upper bound of a
+g = [monomials([e;x],0);
+    -(x(6)-a_lb)*(x(6)-a_ub);
+    a_ub^2 - x(6)^2;
+    4 - e(3)^2;
+    4 - e(4)^2;
+    (a_ub - a_lb)^2 - e(6)^2];
 
 max_deg = max([deg_V-1+deg_delta_f, ...
     2+deg_M, ...
@@ -84,6 +90,7 @@ threshold = 1e-6;
 sol.V = cleanpoly(sosgetsol(prog,V),threshold);
 sol.Q = cleanpoly(sosgetsol(prog,Q),threshold);
 sol.M = cleanpoly(sosgetsol(prog,M),threshold);
+sol.eps = eps;
 
 save('SOS-sols/cartpole_sol.mat', 'sol')
 
