@@ -59,7 +59,7 @@ sol.V = cleanpoly(sosgetsol(prog,V),threshold);
 sol.Q = cleanpoly(sosgetsol(prog,Q),threshold);
 sol.M = cleanpoly(sosgetsol(prog,M),threshold);
 
-
+save('SOS-sols/pendulum_sol.mat', 'sol')
 
 %% helper function
 function f = pendulum_f(x,m,b,l)
