@@ -85,6 +85,7 @@ sol.V = cleanpoly(sosgetsol(prog,V),threshold);
 sol.Q = cleanpoly(sosgetsol(prog,Q),threshold);
 sol.M = cleanpoly(sosgetsol(prog,M),threshold);
 
+save('SOS-sols/cartpole_sol.mat', 'sol')
 
 %% helper function
 % State defined as x = [x, x_dot, sin(theta), cos(theta), theta_dot, a]

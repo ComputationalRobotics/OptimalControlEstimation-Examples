@@ -1,9 +1,17 @@
 clc; clear; close all;
 
+% Load solution from SOS program
+sol = load('SOS-sols/cartpole_sol.mat').sol;
+
+sostoolspath = "../SOSTOOLS";
+addpath(genpath(sostoolspath))
+
 m_c = 1; m_p = 1; l = 1; g = 9.8;
 ns = 6;  % number of states
 nu = 1;  % number of inputs
 ny = 4;  % number of outputs
+
+eps = 10^-2;
 
 num_steps = 5999*100;
 dt = 0.0001;
@@ -23,13 +31,15 @@ x_traj = zeros(ns,num_steps+1);
 x_traj(:,1) = x0;
 x = x0;
 for i = 1:num_steps
-    u = randi([-20, 20]);
+    u = randi([-5, 5]);
+    % u = 0;
     u_traj(i) = u;
     y = x([1,3,4,6]);
-    xdot = cartpole_f(x,u,m_c,m_p,l,g);
+    xdot = cartpole_f(x,l) + cartpole_psi(u, y, m_p, l, m_c, g);
 
     x = x + xdot * dt;
     x(3:4) = normc(x(3:4));
+    % TODO: check if a variation over time makes sense or not
     x_traj(:,i+1) = x;
 end
 y_traj = x_traj([1,3,4,6],:);
@@ -37,7 +47,7 @@ theta_traj = atan2(x_traj(3,:),x_traj(4,:));
 
 
 %% simulate observer
-xhat0 = [0;0;0;1;1;a0];
+xhat0 = [0;0;0;1;0;m_p/m_c];
 xhat_traj = zeros(ns,num_steps+1);
 xhat_traj(:,1) = xhat0;
 xhat = xhat0;
@@ -46,24 +56,22 @@ for i = 1:num_steps
     u = u_traj(i);
     yhati = xhat([1,3,4,6]);
     Ce = yhati - yi;
-    Qi = Q_func(Ce);
-    Mi = M_func(Ce,yi,u);
-    disp(det(Qi))
+    Qi = Q_func(Ce, eps, sol, ns);
+    Mi = M_func(Ce, yi, sol, ns);
     
-    xhatdot = cartpole_f(xhat,u,m_c,m_p,l,g) + (Qi \ Mi)*Ce;
+    xhatdot = cartpole_f(xhat,l) + cartpole_psi(u, y, m_p, l, m_c, g) + (Qi \ Mi)*Ce;
 
     xhat = xhat + xhatdot * dt;
     xhat(3:4) = normc(xhat(3:4));
     xhat_traj(:,i+1) = xhat;
 end
-theta_hat_traj = atan2(x_hat_traj(3,:),x_hat_traj(4,:));
+theta_hat_traj = atan2(xhat_traj(3,:),xhat_traj(4,:));
 
 
 %% plot comparison
 labelsize = 20;
 e_norm_traj = sqrt(sum((xhat_traj - x_traj).^2,1));
 t_traj = (1:(num_steps+1)) * dt;
-
 
 figure;
 
@@ -154,28 +162,44 @@ end
 
 
 %% helper functions
-function Q = Q_func(Ce)
+function Q = Q_func(Ce, eps, sol, ns)
+e = mpvar('e',[ns,1]);
 e_1 = Ce(1);
 e_3 = Ce(2);
 e_4 = Ce(3);
 e_6 = Ce(4);
-Q = zeros(6,6);
+Q_tilde = double(subs(sol.Q, e([1,3,4,6]), [e_1;e_3;e_4;e_6]));
+Q = Q_tilde + eps*eye(ns);
 end
 
-function M = M_func(Ce,y,u)
+function M = M_func(Ce, y, sol, ns)
+e = mpvar('e',[ns,1]);
+x = mpvar('x',[ns,1]);
 e_1 = Ce(1);
 e_3 = Ce(2);
 e_4 = Ce(3);
 e_6 = Ce(4);
-M = zeros(6,3);
+M = double(subs(sol.M, [e([1,3,4,6]); x([1,3,4,6])], [e_1;e_3;e_4;e_6;y]));
 end
 
-function f = cartpole_f(x,u,m_c,m_p,l,g)
+% State defined as x = [x, x_dot, sin(theta), cos(theta), theta_dot, a]
+% where a = 1/(m_c/m_p+sin(theta)^2)
+function f = cartpole_f(x,l)
 f = [x(2);
-    1/m_p * x(6) * (u + m_p*x(3)*(l*x(5)^2 + g*x(4)));
+    x(6) * x(3)*l*x(5)^2;
     x(4)*x(5);
     -x(3)*x(5);
-    1/(l*m_p) * x(6) * (-u*x(4) -m_p*l*x(5)^2*x(3)*x(4) - (m_c+m_p)*g*x(3));
-    -2*x(6)^2*x(3)*x(4)*x(5);
+    -x(6)*x(5)^2*x(3)*x(4);
+    -2*x(3)*x(4)*x(5)*x(6)^2;
+    ];
+end
+
+function psi = cartpole_psi(u, y, m_p, l, m_c, g)
+psi = [0;
+    1/m_p*y(4)*u + y(4)*y(2)*y(3)*g;
+    0;
+    0;
+    -1/(l*m_p)*y(4)*(u*y(3) + (m_c+m_p)*g*y(2));
+    0;
     ];
 end
