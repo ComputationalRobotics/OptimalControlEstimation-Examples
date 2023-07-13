@@ -6,14 +6,14 @@ addpath(genpath(sostoolspath))
 addpath(genpath(mosekpath))
 
 m_c = 1; m_p = 1; l = 1; g = 9.8;
-e_bound = 100;
 ns = 6;
 ny = 4;
 
-gamma = 0.1;  % TODO: update
-deg_V = 2;
-deg_K = 2;
-kappa_plus = 0;
+gamma = 0.1;  % desired exponential rate
+deg_V = 2; % degree of Lyapunov function V
+deg_K = 2; % degree of observer gain
+kappa_plus = 0; % choose whether to go above the minimum relaxation order
+e_bound = 100; % error bound
 
 deg_Q = deg_V - 2;
 deg_M = deg_Q + deg_K;
@@ -29,12 +29,19 @@ Cx = C*x;
 delta_f = cartpole_f(x+e,l) - cartpole_f(x,l);
 deg_delta_f = delta_f.maxdeg;
 
+% equality constraints on x and e
 h = [x(3)^2 + x(4)^2 - 1;
     x(6)*m_c/m_p + x(6)*x(3)^2 - 1];
 
-g = [1;- e'*e + e_bound^2];
+% inequality constraints on x and e
+% note that I add g0 = 1
+g = [1;
+     -e'*e+e_bound^2];
 
-max_deg = max([deg_V - 1 + deg_delta_f,2+deg_M,h.maxdeg,g.maxdeg]);
+max_deg = max([deg_V-1+deg_delta_f, ...
+    2+deg_M, ...
+    h.maxdeg, ...
+    g.maxdeg]);
 
 % minimum relaxation order 
 kappa   = ceil(max_deg / 2) + kappa_plus;
@@ -47,8 +54,6 @@ prog = sosprogram([e;x]);
 [prog,Q] = sospolymatrixvar(prog,monomials(Ce,0:deg_Q),[ns,ns],'symmetric');
 [prog,M] = sospolymatrixvar(prog,monomials([Ce;Cx],0:deg_M),[ns,ny]);
 
-
-[prog,sig0] = sossosvar(prog,monomials([e;x],0:kappa));
 
 lams = [];
 for i = 1:length(h)
