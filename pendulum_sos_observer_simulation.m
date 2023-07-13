@@ -1,6 +1,14 @@
 clc; clear; close all;
 
+% Load solution from SOS program
+sol = load('SOS-sols/pendulum_sol.mat').sol;
+
+sostoolspath = "../SOSTOOLS";
+addpath(genpath(sostoolspath))
+
 m = 1; g = 9.8; l = 1; b = 0.1;
+ns = 3; ny = 2; nu =1;
+eps = 10^-2;
 
 num_steps = 5999;
 dt = 0.01;
@@ -34,8 +42,8 @@ for i = 1:num_steps
     ui = u_traj(i);
     yhati = xhat(1:2);
     Ce = yhati - yi;
-    Qi = Q_func(Ce);
-    Mi = M_func(Ce,yi);
+    Qi = Q_func(Ce, eps, sol, ns);
+    Mi = M_func(Ce,yi,sol,ns);
     
     xhatdot = pendulum_f(xhat,m,b,l) + pendulum_psi(ui,yi,m,g,l) + (Qi \ Mi)*Ce;
 
@@ -86,26 +94,20 @@ ax.FontSize = 16;
 
 
 %% helper functions
-function Q = Q_func(Ce)
-e1 = Ce(1);
-e2 = Ce(2);
-Q = [
-    0.4603*e2^2 + 1.1909, -0.4603*e1*e2, 0;
-    -0.4603*e1*e2, 0.4603*e1^2 + 1.1909, 0;
-    0, 0, 1.8863
-];
-
+function Q = Q_func(Ce,eps,sol,ns)
+e_1 = Ce(1);
+e_2 = Ce(2);
+e = mpvar('e',[ns,1]);
+Q_tilde = double(subs(sol.Q, e([1,2]), [e_1;e_2]));
+Q = Q_tilde + eps*eye(ns);
 end
 
-
-function M = M_func(Ce,y)
-e1 = Ce(1);
-e2 = Ce(2);
-M = [
-    -2.0878*e1^2-0.8667*e2^2-0.4588-0.4885, -0.8667*e1*e2;
-    -0.8667*e1*e2, -0.8667*e1^2-2.0878*e2^2-0.4588-0.4885;
-    -1.1909*y(2),1.1909*y(1)
-    ];
+function M = M_func(Ce,y,sol,ns)
+e = mpvar('e',[ns,1]);
+x = mpvar('x',[ns,1]);
+e_1 = Ce(1);
+e_2 = Ce(2);
+M = double(subs(sol.M, [e([1,2]); x([1,2])], [e_1;e_2;y]));
 end
 
 function f = pendulum_f(x,m,b,l)
