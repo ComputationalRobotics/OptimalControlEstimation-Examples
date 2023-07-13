@@ -13,8 +13,8 @@ ny = 4;  % number of outputs
 
 eps = 10^-2;
 
-num_steps = 5999*100;
-dt = 0.0001;
+num_steps = 59990;
+dt = 0.001;
 
 %% simulate real dynamics
 
@@ -117,9 +117,9 @@ ax.FontSize = 16;
 
 %% Create animation
 
-filename = 'cartpole_animation.gif';
+filename = 'Animations/cartpole_animation.gif';
 figure;
-for i = 1:300:num_steps  % Only every 3 steps
+for i = 1:30:num_steps
     clf;
     
     % Calculate cart and pole positions
@@ -133,7 +133,7 @@ for i = 1:300:num_steps  % Only every 3 steps
     % Plot the pole
     line([cart_pos, cart_pos+pole_pos(1)], [0, pole_pos(2)], 'Color', 'r', 'LineWidth', 2);
     
-    xlims = [-20, 20];
+    xlims = [-2, 5];
     xlim(xlims);
     ylims = [-2, 2];
     ylim(ylims);

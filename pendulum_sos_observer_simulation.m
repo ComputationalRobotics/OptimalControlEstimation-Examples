@@ -13,6 +13,7 @@ eps = 10^-2;
 num_steps = 5999;
 dt = 0.01;
 
+
 %% simulate real dynamics
 x0 = [0;1;0];
 u_traj  = zeros(1,num_steps);
@@ -30,6 +31,7 @@ for i = 1:num_steps
     x_traj(:,i+1) = x;
 end
 y_traj = x_traj(1:2,:);
+theta_traj = atan2(x_traj(1,:),x_traj(2,:));
 
 
 %% simulate observer
@@ -93,6 +95,59 @@ ax = gca;
 ax.FontSize = 16;
 
 
+%% Create animation
+
+filename = 'Animations/pendulum_animation.gif';
+figure;
+
+for i = 1:30:num_steps
+    clf;
+
+    % Calculate pendulum position
+    x_pendulum = l * x_traj(1,i);
+    y_pendulum = -l * x_traj(2,i);
+
+    hold on
+    grid on
+
+    h_origin = plot(0, 0, 'ko', 'MarkerSize', 5, 'MarkerFaceColor', 'k');
+    h_pendulum = plot(0, 0, 'bo', 'MarkerSize', 10, 'MarkerFaceColor', 'b');
+    line_handle = line([0, 0], [0, -l], 'LineWidth', 2);
+    xlims = [-l-0.2, l+0.2];
+    xlim(xlims);
+    ylims = [-l-0.2, l+0.2];
+    ylim(ylims);
+    axis equal;
+    xlabel('x');
+    ylabel('y');
+
+    % Plot the pendulum
+    set(h_origin, 'XData', 0, 'YData', 0);
+    set(h_pendulum, 'XData', x_pendulum, 'YData', y_pendulum);
+    set(line_handle, 'XData', [0, x_pendulum], 'YData', [0, y_pendulum]);
+
+    % Restore initial x-axis limits
+    xlim(xlims);
+
+    % Add time annotation
+    time = i * dt;  % calculate current time
+    annotation_text = sprintf('Time: %.2f s', time);
+    text(xlims(2)-0.5, ylims(1)+0.2, annotation_text, 'FontSize', 10);
+    
+    % Capture the plot as an image
+    frame = getframe;
+    im = frame2im(frame);
+    [imind,cm] = rgb2ind(im,256);
+    
+    % Write to the GIF file
+    if i == 1
+        imwrite(imind,cm,filename,'gif', 'Loopcount',inf, 'DelayTime', dt);
+    else
+        imwrite(imind,cm,filename,'gif','WriteMode','append', 'DelayTime', dt);
+    end
+end
+
+
 %% helper functions
 function Q = Q_func(Ce,eps,sol,ns)
 e_1 = Ce(1);
@@ -110,6 +165,7 @@ e_2 = Ce(2);
 M = double(subs(sol.M, [e([1,2]); x([1,2])], [e_1;e_2;y]));
 end
 
+% State defined as x = [sin(theta), cos(theta), theta_dot]
 function f = pendulum_f(x,m,b,l)
 const = b / (m * l^2);
 f = [x(2)*x(3);
