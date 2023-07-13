@@ -42,7 +42,7 @@ for i = 1:num_steps
     ui = u_traj(i);
     yhati = xhat(1:2);
     Ce = yhati - yi;
-    Qi = Q_func(Ce, eps, sol, ns);
+    Qi = Q_func(Ce, sol, ns);
     Mi = M_func(Ce,yi,sol,ns);
     
     xhatdot = pendulum_f(xhat,m,b,l) + pendulum_psi(ui,yi,m,g,l) + (Qi \ Mi)*Ce;
@@ -94,12 +94,12 @@ ax.FontSize = 16;
 
 
 %% helper functions
-function Q = Q_func(Ce,eps,sol,ns)
+function Q = Q_func(Ce,sol,ns)
 e_1 = Ce(1);
 e_2 = Ce(2);
 e = mpvar('e',[ns,1]);
 Q_tilde = double(subs(sol.Q, e([1,2]), [e_1;e_2]));
-Q = Q_tilde + eps*eye(ns);
+Q = Q_tilde + sol.eps*eye(ns);
 end
 
 function M = M_func(Ce,y,sol,ns)

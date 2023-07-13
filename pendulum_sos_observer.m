@@ -58,6 +58,7 @@ threshold = 1e-6;
 sol.V = cleanpoly(sosgetsol(prog,V),threshold);
 sol.Q = cleanpoly(sosgetsol(prog,Q),threshold);
 sol.M = cleanpoly(sosgetsol(prog,M),threshold);
+sol.eps = eps;
 
 save('SOS-sols/pendulum_sol.mat', 'sol')
 
