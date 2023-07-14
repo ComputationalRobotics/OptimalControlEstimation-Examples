@@ -10,9 +10,14 @@ m_c = 1; m_p = 1; l = 1; g = 9.8;
 ns = 5; n1 = 3; n2 = 2;
 ny = n1;
 
+% Choose whether to fix Q
+FIX_Q = true;
+RHO = 0.00001; % V(e) \leq RHO when FIX_Q is true
+CONST = (3 - sqrt(5))/2;
+
 gamma = 0.0;  % desired exponential rate
 deg_K = 2; % degree of observer gain
-kappa_plus = 1; % choose whether to go above the minimum relaxation order
+kappa_plus = 0; % choose whether to go above the minimum relaxation order
 deg_M = deg_K;
 
 e = mpvar('e',[ns,1]);
@@ -28,11 +33,22 @@ g = [monomials([e;x],0)];
 
 eps = 0.0;
 prog = sosprogram([e;x]);
-[prog,Q] = sospolymatrixvar(prog,monomials([e;x],0),[n1,n1],'symmetric');
+
+if FIX_Q
+    Q = CONST * eye(n1);
+else
+    [prog,Q] = sospolymatrixvar(prog,monomials([e;x],0),[n1,n1],'symmetric');
+end
+Qtld = Q + eps*eye(n1);
+
 [prog,M1] = sospolymatrixvar(prog,monomials([e1;x1],0:deg_M),[n1,ny]);
 [prog,K2] = sospolymatrixvar(prog,monomials([e1;x1],0:deg_K),[n2,ny]);
-Qtld = Q + eps*eye(n1);
+
 V = e1'*Qtld*e1 + e2'*cartpole_M(x,m_p,m_c,l)*e2;
+if FIX_Q
+    g = [g; RHO - V; RHO/CONST - e'*e];
+end
+
 v_delta = cartpole_v(x+e) - cartpole_v(x);
 c_delta = (cartpole_Cor(x,m_p,l) - cartpole_Cor(x+e,m_p,l))*(x2+e2);
 Vdot = 2*e1'*Qtld*v_delta + 2*e1'*M1*e1 + 2*e2'*c_delta + 2*e2'*K2*e1;
@@ -61,12 +77,16 @@ end
 eq = Vdot + gamma * V + sigs'*g + lams'*h;
 
 prog = soseq(prog,eq);
-prog = sosmatrixineq(prog,Q);
+if ~FIX_Q
+    prog = sosmatrixineq(prog,Q);
+end
 options.solver = 'mosek';
 prog = sossolve(prog,options);
 
 threshold = 1e-6;
-sol.Q = cleanpoly(sosgetsol(prog,Q),threshold);
+if ~FIX_Q
+    sol.Q = cleanpoly(sosgetsol(prog,Q),threshold);
+end
 sol.M1 = cleanpoly(sosgetsol(prog,M1),threshold);
 sol.eps = eps;
 
