@@ -5,7 +5,7 @@ mosekpath    = "../../../mosek";
 addpath(genpath(sostoolspath))
 addpath(genpath(mosekpath))
 
-m_c = 1; m_p = 1; l = 1; g = 9.8;
+m_c = 1; m_p = 1; l = 1;
 ns = 6;
 ny = 4;
 
