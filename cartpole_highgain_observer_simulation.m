@@ -2,14 +2,14 @@ clc; clear; close all;
 
 mp = 1; g = 9.8; l = 1; b = 0.1; mc = 1;
 
-L = 100;
+L = 10;
 k = [1;1];
-num_steps = 599999;
-dt = 0.0001;
+num_steps = 59999;
+dt = 0.001;
 
 
 %% simulate real dynamics
-x0 = [0;1;0;0];
+x0 = [0;1;1;0];
 u_traj  = zeros(1,num_steps);
 x_traj = zeros(4,num_steps+1);
 x_traj(:,1) = x0;
@@ -26,7 +26,7 @@ y_traj = x_traj(1:2,:);
 
 
 %% simulate observer
-xhat0 = [1;1;1;2];
+xhat0 = [1;2;0;0];
 xhat_traj = zeros(4,num_steps+1);
 xhat_traj(:,1) = xhat0;
 xhat = xhat0;
@@ -38,8 +38,8 @@ for i = 1:num_steps
     % not use y as yhat(1)
     %xhatdot = [xhat(2)-L*k(1)*Ce;-(b*xhat(2)+m*g*l^2*sin(xhat(1))-ui)/m/l^2-L^2*k(2)*Ce];
     %not do any thing
-    xhatdot = [0;0;0;0];
-
+    xhatdot = [xhat(3)-L*k(1)*Ce(1);xhat(4)-L*k(1)*Ce(2);(ui+mp*sin(yi(2))*(l*xhat(4)^2+g*cos(yi(2))))/(mc+mp*sin(yi(2))^2)-L^2*k(2)*Ce(1);-(ui*cos(yi(2))+mp*l*xhat(4)^2*cos(yi(2))*sin(yi(2))+(mp+mc)*g*sin(yi(2)))/l/(mc+mp*sin(yi(2))^2)-L^2*k(2)*Ce(2)];
+    %xhatdot = [0;0;0;0];
     xhat = xhat + xhatdot * dt;
 
     xhat_traj(:,i+1) = xhat;
@@ -58,7 +58,7 @@ s_comp = [x_traj(1,:);xhat_traj(1,:)];
 plot(t_traj,x_traj(1,:)','LineWidth',2)
 hold on
 plot(t_traj,xhat_traj(1,:)','LineWidth',2)
-ylabel('$x_1$','Interpreter','latex','FontSize',labelsize)
+ylabel('$x$','Interpreter','latex','FontSize',labelsize)
 xlabel('time','FontSize',labelsize)
 legend('x','xhat')
 ax = gca;
@@ -67,7 +67,7 @@ ax.FontSize = 16;
 nexttile
 c_comp = [x_traj(2,:);xhat_traj(2,:)];
 plot(t_traj,c_comp','LineWidth',2)
-ylabel('$x_2$','Interpreter','latex','FontSize',labelsize)
+ylabel('$\theta$','Interpreter','latex','FontSize',labelsize)
 xlabel('time','FontSize',labelsize)
 ax = gca;
 ax.FontSize = 16;

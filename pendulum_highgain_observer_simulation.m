@@ -2,7 +2,7 @@ clc; clear; close all;
 
 m = 1; g = 9.8; l = 1; b = 0.1;
 
-L = 100;
+L = 10;
 k = [1;1];
 num_steps = 5999;
 dt = 0.01;
@@ -53,7 +53,7 @@ tiledlayout(4,1)
 nexttile
 s_comp = [x_traj(1,:);xhat_traj(1,:)];
 plot(t_traj,s_comp','LineWidth',2)
-ylabel('$x_1$','Interpreter','latex','FontSize',labelsize)
+ylabel('$\theta$','Interpreter','latex','FontSize',labelsize)
 xlabel('time','FontSize',labelsize)
 ax = gca;
 ax.FontSize = 16;
@@ -61,7 +61,7 @@ ax.FontSize = 16;
 nexttile
 c_comp = [x_traj(2,:);xhat_traj(2,:)];
 plot(t_traj,c_comp','LineWidth',2)
-ylabel('$x_2$','Interpreter','latex','FontSize',labelsize)
+ylabel('$\dot{\theta}$','Interpreter','latex','FontSize',labelsize)
 xlabel('time','FontSize',labelsize)
 ax = gca;
 ax.FontSize = 16;
