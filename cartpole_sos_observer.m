@@ -1,7 +1,7 @@
 clc; clear; close all;
 
 sostoolspath = "../SOSTOOLS";
-mosekpath    = "../../../mosek";
+mosekpath    = "../mosek";
 addpath(genpath(sostoolspath))
 addpath(genpath(mosekpath))
 
@@ -11,9 +11,8 @@ ny = 4;
 
 gamma = 0.0;  % desired exponential rate
 deg_V = 2; % degree of Lyapunov function V
-deg_K = 2; % degree of observer gain
+deg_K = 4; % degree of observer gain
 kappa_plus = 0; % choose whether to go above the minimum relaxation order
-% e_bound = 100; % error bound % we cannot have bounds like this
 
 deg_Q = deg_V - 2;
 deg_M = deg_Q + deg_K;
@@ -34,14 +33,22 @@ h = [x(3)^2 + x(4)^2 - 1;
     x(6)*m_c/m_p + x(6)*x(3)^2 - 1];
 
 % inequality constraints on x and e
-% note that I add g0 = 1
 a_lb = 1 / (m_c/m_p + 1); % lower bound of a
 a_ub = 1 / (m_c/m_p); % upper bound of a
+thetadot_lb = -50; % lower bound of theta_dot
+thetadot_ub = 50; % upper bound of theta_dot
+xdot_lb = -10; % lower bound of x_dot
+xdot_ub = 10; % upper bound of x_dot
 g = [monomials([e;x],0);
+    -(x(2)-xdot_lb)*(x(2)-xdot_ub);
+    1 - x(3)^2;
+    1 - x(4)^2;
+    -(x(5)-thetadot_lb)*(x(5)-thetadot_ub);
     -(x(6)-a_lb)*(x(6)-a_ub);
-    a_ub^2 - x(6)^2;
+    (xdot_ub-xdot_lb)^2 - e(2)^2;
     4 - e(3)^2;
     4 - e(4)^2;
+    (thetadot_ub-thetadot_lb)^2 - e(5)^2;
     (a_ub - a_lb)^2 - e(6)^2];
 
 max_deg = max([deg_V-1+deg_delta_f, ...
@@ -74,7 +81,7 @@ for i = 1:length(g)
     sigs = [sigs;sigi];
 end
 
-eps = 0.1;
+eps = 0.01;
 
 eq = e'*(Q+eps*eye(ns))*delta_f + e'*M*(Ce) + gamma * V + ...
     sigs'*g + lams'*h;

@@ -1,15 +1,15 @@
 clc; clear; close all;
 
 sostoolspath = "../SOSTOOLS";
-mosekpath    = "../../../mosek";
+mosekpath    = "../mosek";
 addpath(genpath(sostoolspath))
 addpath(genpath(mosekpath))
 
 m_1 = 1; m_2 = 1; l_1 = 1; l_2 = 1; l_c1 = l_1/2; l_c2 = l_2/2; g = 9.8;
 I_1 = 1/3*m_1*l_1^2/3; I_2 = 1/3*m_2*l_2^2;
-ns = 6; ny = 4; nu = 1;
+ns = 6; ny = 4;
 
-gamma = 0.1;  % desired exponential rate
+gamma = 0.0;  % desired exponential rate
 deg_V = 2; % degree of Lyapunov function V
 deg_K = 2; % degree of observer gain
 kappa_plus = 0; % choose whether to go above the minimum relaxation order
@@ -38,7 +38,8 @@ h = [x(1)^2 + x(2)^2 - 1;
 
 % inequality constraints on x and e
 g = [1;
-     4 - e(1:4).^2;];
+     4 - e(1:4).^2;
+     25 - e(5:6).^2;];
 
 max_deg = max([deg_V-1+deg_delta_f, ...
     2+deg_M, ...
