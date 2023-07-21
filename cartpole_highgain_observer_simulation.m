@@ -2,7 +2,7 @@ clc; clear; close all;
 
 mp = 1; g = 9.8; l = 1; b = 0.1; mc = 1;
 
-L = 10;
+L = 1;
 k = [1;1];
 num_steps = 59999;
 dt = 0.001;
@@ -15,7 +15,10 @@ x_traj = zeros(4,num_steps+1);
 x_traj(:,1) = x0;
 x = x0;
 for i = 1:num_steps
-    ui   = 0;
+    ui   = -1;
+    if(x(2)<0)
+        ui = -ui;
+    end
     u_traj(i) = ui;
     y    = x(1:2);
     xdot = [x(3);x(4);(ui+mp*sin(x(2))*(l*x(4)^2+g*cos(x(2))))/(mc+mp*sin(x(2))^2);-(ui*cos(x(2))+mp*l*x(4)^2*cos(x(2))*sin(x(2))+(mp+mc)*g*sin(x(2)))/l/(mc+mp*sin(x(2))^2)];
@@ -26,7 +29,7 @@ y_traj = x_traj(1:2,:);
 
 
 %% simulate observer
-xhat0 = [1;2;0;0];
+xhat0 = [0;1;4;5];
 xhat_traj = zeros(4,num_steps+1);
 xhat_traj(:,1) = xhat0;
 xhat = xhat0;
@@ -55,9 +58,9 @@ figure;
 tiledlayout(4,1)
 nexttile
 s_comp = [x_traj(1,:);xhat_traj(1,:)];
-plot(t_traj,x_traj(1,:)','LineWidth',2)
+plot(t_traj,x_traj(3,:)','LineWidth',2)
 hold on
-plot(t_traj,xhat_traj(1,:)','LineWidth',2)
+plot(t_traj,xhat_traj(3,:)','LineWidth',2)
 ylabel('$x$','Interpreter','latex','FontSize',labelsize)
 xlabel('time','FontSize',labelsize)
 legend('x','xhat')
@@ -65,7 +68,7 @@ ax = gca;
 ax.FontSize = 16;
 
 nexttile
-c_comp = [x_traj(2,:);xhat_traj(2,:)];
+c_comp = [x_traj(4,:);xhat_traj(4,:)];
 plot(t_traj,c_comp','LineWidth',2)
 ylabel('$\theta$','Interpreter','latex','FontSize',labelsize)
 xlabel('time','FontSize',labelsize)
