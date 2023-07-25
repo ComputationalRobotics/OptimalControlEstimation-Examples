@@ -28,13 +28,10 @@ cvx_begin
     cvx_solver mosek
     variable H(ns,ny)
     variable P(ns,ns) symmetric
-    variable Q(ns,ns) symmetric
-    % minimize(lambda_max(P))
     minimize(0)
     subject to
-        P >= 0;
-        Q >= 0;
-        A'*P - C'*H' + P*A - H*C == - Q;
+        P == semidefinite(ns)
+        A'*P - C'*H' + P*A - H*C == - eye(ns);
 cvx_end
 max_gam = 0.5 / max(eig(P));
 K = P \ H;

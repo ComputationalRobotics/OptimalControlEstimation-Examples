@@ -18,7 +18,7 @@ for i = 1:length(k_choices)
         variable P(2,2) symmetric 
         minimize(0)
         subject to
-            P >= 0 
+            P == semidefinite(2) 
             AKC'*P + P*AKC == - eye(2)
     cvx_end
     max_eig_P = max(eig(P));
@@ -31,7 +31,7 @@ cvx_begin
     variable P(2,2) symmetric
     minimize(lambda_max(P))
     subject to
-        P >= 0;
+        P == semidefinite(2)
         A'*P - C'*H' + P*A - H*C == - eye(2);
 cvx_end
 max_gam = 0.5 / max(eig(P));
