@@ -6,7 +6,7 @@ N = 50; % number of bins in discretization
 
 THETA       = linspace(-pi,pi,N); % theta between -pi and pi
 THETADOT    = linspace(-pi,pi,N); % thetadot between -pi and pi
-U           = linspace(-4.9,4.9,N)'; % control between -4.9 and 4.9
+U           = linspace(-1,1,N)'; % control between -4.9 and 4.9
 
 [X1,X2] = meshgrid(THETA,THETADOT);
 X = [X1(:),X2(:)];
@@ -51,7 +51,7 @@ P = sparse(P_rows,P_cols,P_vals,nx*nu,nx);
 
 %% start value iteration
 fprintf("Start value iteration ...")
-gamma = 0.9;
+gamma = 0.999;
 Q = zeros(nx*nu,1);
 iter = 1;
 MAX_ITERS = 1e5;
