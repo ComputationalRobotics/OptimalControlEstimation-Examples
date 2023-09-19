@@ -1,54 +1,66 @@
-% Initialization
-format long
-num_samples = 3000;
-num_iterations = 10000;
-w = ones(6, 1);  % Initial weights
-threshold = 1e-3;
-u_max = 4;
-Ts = 0.01;
-discounted_f = 1;
+clc; clear; close all;
 
-% Cost functions
-one_stage_cost = @(x0, x1, u) 0.1 * x0^2 + 0.1 * x1^2 + u^2;
-J_approx = @(x0, x1, w) w' * [x0^2; x0 * x1; x1^2; x0; x1; 1];
+%% system parameters
+h = 0.01;
+A = [1, h; 0, 1];
+B = [0; h];
+Q = 0.1*eye(2);
+R = 1;
 
-% Main loop
-for iter = 1:num_iterations
-    % writematrix(w, 'LQR_fixatone.dat', 'WriteMode', 'append');
-    
+%% groundtruth S matrix from LQR
+[~,S_lqr,~] = dlqr(A,B,Q,R,zeros(2,1));
+
+%% Fitted value iteration
+num_samples     = 5000;
+num_iterations  = 1e4;
+th              = 1e-6;
+S_vec           = ones(3,1);
+S_mat           = vec2mat(S_vec);
+iter = 1;
+
+while iter < num_iterations
     X = [];  % Feature matrix
     Y = [];  % Target cost vector
     
     for i = 1:num_samples
-        % Sample state
-        x0 = 4 * rand() - 2;
-        x1 = 4 * rand() - 2;
+        x = randn(2,1);
         
-        % Compute features and target
-        features = [x0^2; x0 * x1; x1^2; x0; x1; 1];
-        cost_fn = @(u) one_stage_cost(x0, x1, u) + discounted_f * J_approx(x0 + Ts * x1, x1 + Ts * u, w);
-        u_opt = fminbnd(cost_fn, -u_max, u_max);
-        target = cost_fn(u_opt);
-        
+        % solve u
+        u = - ( (1 + B'*S_mat*B) \ B'*S_mat*A*x );
+
+        % compute beta
+        beta = running_cost(x,u,Q,R) + (A*x+B*u)'*S_mat*(A*x+B*u);
+
         % Store data
-        X = [X; features'];
-        Y = [Y; target];
+        X = [X; [x(1)^2, 2*x(1)*x(2), x(2)^2]];
+        Y = [Y; beta];
     end
     
     % Update weights
-    w_new = X \ Y;
+    S_vec_new = X \ Y;
     
     % Convergence check
-    if norm(w_new - w) < threshold
-        disp(iter);
+    if norm(S_vec_new - S_vec) < th
+        fprintf("FVI converged in %d iterations.",iter);
         break;
     end
     
-    w = w_new;
-    disp(w);
+    S_vec = S_vec_new;
+    S_mat = vec2mat(S_vec);
+    disp(S_vec);
+
+    iter = iter + 1;
 end
 
-% Final output
-S = [w(2), 0.5 * w(1); 0.5 * w(1), w(3)];
-disp(S);
-disp(w);
+S_fvi = S_mat;
+
+
+%% helper functions
+function g = running_cost(x,u,Q,R)
+g = x'*Q*x + u'*R*u;
+end
+
+function S_mat = vec2mat(S_vec)
+S_mat = [S_vec(1), S_vec(2);
+         S_vec(2), S_vec(3)];
+end
