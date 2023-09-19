@@ -4,9 +4,9 @@ m = 1; gravity = 9.8; l = 1; b = 0.1;
 
 N = 50; % number of bins in discretization
 
-THETA       = linspace(-pi,pi,N); % theta between -pi and pi
+THETA       = linspace(-1.5*pi,1.5*pi,N); % theta between -pi and pi
 THETADOT    = linspace(-pi,pi,N); % thetadot between -pi and pi
-U           = linspace(-1,1,N)'; % control between -4.9 and 4.9
+U           = linspace(-4.9,4.9,N)'; % control between -4.9 and 4.9
 
 [X1,X2] = meshgrid(THETA,THETADOT);
 X = [X1(:),X2(:)];
@@ -21,7 +21,8 @@ g_mat = reshape(g,nx,nu);
 % construct transition matrix P
 % create a triangulation of the mesh points
 DT = delaunayTriangulation(X);
-dt = 0.001; % convert continuous-time dynamics to discrete-time
+figure; triplot(DT);
+dt = 0.01; % convert continuous-time dynamics to discrete-time
 P_rows = []; % row indices of nonzero entries in P
 P_cols = []; % col indices of nonzero entries in P
 P_vals = []; % values of nonzero entries in P
@@ -81,6 +82,64 @@ surf(reshape(X(:,1),N,N),...
 xlabel("$\theta$",'Interpreter','latex','FontSize',16);
 ylabel("$\dot{\theta}$",'Interpreter','latex','FontSize',16);
 zlabel("$J^\star$",'Interpreter','latex','FontSize',16)
+
+%% execute the controller
+x = [-0.4;0.3];
+x_traj = x;
+u_traj = [];
+MAX_ITERS = 1e3;
+iter = 1;
+while iter < MAX_ITERS
+    [ID,B] = pointLocation(DT,x');
+    vertices = DT.ConnectivityList(ID,:);
+    u_v = zeros(length(vertices),1);
+    for j = 1:length(vertices)
+        v = vertices(j);
+        [~,id] = min(Q_mat(v,:));
+        u_v(j) = U(id);
+    end
+    u = B(:)'*u_v;
+    xp = pendulum_f_z(x(:),u,m,gravity,l,b)*dt + x(:); % next state
+    u_traj = [u_traj;u];
+
+    if norm(x - xp) < 1e-6
+        break;
+    end    
+    x = xp;
+    x_traj = [x_traj,x];
+    iter = iter + 1;
+end
+
+%% plot comparison
+labelsize = 20;
+
+t_traj = (1:(size(x_traj,2)-1)) * dt;
+figure;
+tiledlayout(3,1)
+nexttile
+plot(t_traj,x_traj(1,1:end-1),'LineWidth',2)
+ylabel('$z_1$','Interpreter','latex','FontSize',labelsize)
+xlabel('time','FontSize',labelsize)
+grid on
+ax = gca;
+ax.FontSize = 16;
+
+nexttile
+plot(t_traj,x_traj(2,1:end-1),'LineWidth',2)
+ylabel('$z_2$','Interpreter','latex','FontSize',labelsize)
+xlabel('time','FontSize',labelsize)
+grid on
+ax = gca;
+ax.FontSize = 16;
+
+nexttile
+plot(t_traj,u_traj,'LineWidth',2)
+ylabel('$u$','Interpreter','latex','FontSize',labelsize)
+xlabel('time','FontSize',labelsize)
+grid on
+ax = gca;
+ax.FontSize = 16;
+
 
 %% helper functions
 % pendulum continuous-time dynamics
