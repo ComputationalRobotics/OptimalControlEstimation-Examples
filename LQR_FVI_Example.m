@@ -4,13 +4,13 @@ num_samples = 3000;
 num_iterations = 10000;
 w = ones(6, 1);  % Initial weights
 threshold = 1e-3;
-tau_max = 4;
+u_max = 4;
 Ts = 0.01;
 discounted_f = 1;
 
 % Cost functions
-one_stage_cost = @(theta, omega, tau) 0.1 * theta^2 + 0.1 * omega^2 + tau^2;
-J_approx = @(theta, omega, w) w' * [theta^2; theta * omega; omega^2; theta; omega; 1];
+one_stage_cost = @(x0, x1, u) 0.1 * x0^2 + 0.1 * x1^2 + u^2;
+J_approx = @(x0, x1, w) w' * [x0^2; x0 * x1; x1^2; x0; x1; 1];
 
 % Main loop
 for iter = 1:num_iterations
@@ -21,14 +21,14 @@ for iter = 1:num_iterations
     
     for i = 1:num_samples
         % Sample state
-        theta = 2 * pi * rand() - pi;
-        omega = 4 * rand() - 2;
+        x0 = 4 * rand() - 2;
+        x1 = 4 * rand() - 2;
         
         % Compute features and target
-        features = [theta^2; theta * omega; omega^2; theta; omega; 1];
-        cost_fn = @(tau) one_stage_cost(theta, omega, tau) + discounted_f * J_approx(theta + Ts * omega, omega + Ts * tau, w);
-        tau_opt = fminbnd(cost_fn, -tau_max, tau_max);
-        target = cost_fn(tau_opt);
+        features = [x0^2; x0 * x1; x1^2; x0; x1; 1];
+        cost_fn = @(u) one_stage_cost(x0, x1, u) + discounted_f * J_approx(x0 + Ts * x1, x1 + Ts * u, w);
+        u_opt = fminbnd(cost_fn, -u_max, u_max);
+        target = cost_fn(u_opt);
         
         % Store data
         X = [X; features'];
