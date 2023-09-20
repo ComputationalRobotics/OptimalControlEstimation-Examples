@@ -11,10 +11,11 @@ R = 1;
 [~,S_lqr,~] = dlqr(A,B,Q,R,zeros(2,1));
 
 %% Fitted value iteration
-num_samples     = 5000;
+num_samples     = 500;
 num_iterations  = 1e4;
-th              = 1e-6;
-S_vec           = ones(3,1);
+th              = 1e-8;
+S_vec           = randn(3,1);
+S_traj          = S_vec;
 S_mat           = vec2mat(S_vec);
 iter = 1;
 
@@ -41,18 +42,47 @@ while iter < num_iterations
     
     % Convergence check
     if norm(S_vec_new - S_vec) < th
-        fprintf("FVI converged in %d iterations.",iter);
+        fprintf("FVI converged in %d iterations.\n",iter);
         break;
     end
     
     S_vec = S_vec_new;
     S_mat = vec2mat(S_vec);
+    S_traj = [S_traj,S_vec];
     disp(S_vec);
 
     iter = iter + 1;
 end
 
 S_fvi = S_mat;
+
+%% plot
+labelsize = 20;
+figure;
+tiledlayout(3,1)
+nexttile
+plot(S_traj(1,:),'LineWidth',2)
+ylabel('$S_1$','Interpreter','latex','FontSize',labelsize)
+xlabel('Iteration','FontSize',labelsize)
+grid on
+ax = gca;
+ax.FontSize = 16;
+
+nexttile
+plot(S_traj(2,:),'LineWidth',2)
+ylabel('$S_2$','Interpreter','latex','FontSize',labelsize)
+xlabel('Iteration','FontSize',labelsize)
+grid on
+ax = gca;
+ax.FontSize = 16;
+
+nexttile
+plot(S_traj(3,:),'LineWidth',2)
+ylabel('$S_3$','Interpreter','latex','FontSize',labelsize)
+xlabel('Iteration','FontSize',labelsize)
+grid on
+ax = gca;
+ax.FontSize = 16;
 
 
 %% helper functions
