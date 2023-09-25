@@ -13,7 +13,7 @@ M_lqr = [Q+A'*S_lqr*A, A'*S_lqr*B;
          B'*S_lqr*A, B'*S_lqr*B + R];
 
 %% Fitted Q-value iteration
-num_samples     = 500;
+num_samples     = 6;
 num_iterations  = 1e4;
 th              = 1e-8;
 M_vec           = randn(6,1);

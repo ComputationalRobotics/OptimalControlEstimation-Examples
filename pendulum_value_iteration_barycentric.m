@@ -84,7 +84,7 @@ ylabel("$\dot{\theta}$",'Interpreter','latex','FontSize',16);
 zlabel("$J^\star$",'Interpreter','latex','FontSize',16)
 
 %% execute the controller
-x = [-0.4;-0.3];
+x = [-0.4;0.3];
 x_traj = x;
 u_traj = [];
 MAX_ITERS = 1e3;

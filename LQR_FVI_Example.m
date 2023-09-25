@@ -11,7 +11,7 @@ R = 1;
 [~,S_lqr,~] = dlqr(A,B,Q,R,zeros(2,1));
 
 %% Fitted value iteration
-num_samples     = 500;
+num_samples     = 2;
 num_iterations  = 1e4;
 th              = 1e-8;
 S_vec           = randn(3,1);
