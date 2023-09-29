@@ -1,6 +1,6 @@
 clc; clear; close all;
 
-initial_state = [-10;-2];
+initial_state = [-10;-0];
 N = 51; % number of knot points
 % add initial guess
 v0 = [1; % guess on terminal time

@@ -1,36 +1,31 @@
 clc; clear; close all;
-m = 1;
-l = 1;
-g = 9.8;
-b = 0.1;
-initial_state = [0.1;0];
-N = 200;
+
+m = 1; l = 1; g = 9.8; b = 0.1; umax = 2;
+initial_state = [0;0]; % start from the bottom
+N = 50;
 T0 = 6; % initial guess on T
 x0 = zeros(2,N); % initial guess on (x1,...,x_N)
 u0 = zeros(N,1); % initial guess on (u1,...,u_N)
-x = initial_state;
-x0(:,1) = x;
+x0(:,1) = initial_state;
 
-% bang-bang for initial guess
-for i = 1:N-1
-    u = -0.99*sign(x(2));
-    xdot = [x(2);-(b*x(2)+m*g*l*sin(x(1))+u)/m/l^2];
-    x = x + T0/(N-1)*xdot;
-    x0(:,i+1) = x;
-    u0(i+1,:) = u;
-end
+% % bang-bang for initial guess
+% for i = 1:N-1
+%     u = -0.99*sign(x(2));
+%     xdot = [x(2);-(b*x(2)+m*g*l*sin(x(1))+u)/m/l^2];
+%     x = x + T0/(N-1)*xdot;
+%     x0(:,i+1) = x;
+%     u0(i+1,:) = u;
+% end
 
 v0 = [T0; x0(:); u0(:)];
 lb = [0.1;
       -Inf*ones(2*N,1);
-      -1*ones(N,1)];
-ub = [10;
+      -umax*ones(N,1)];
+ub = [20;
       Inf*ones(2*N,1);
-      1*ones(N,1)];
-index_even = 2:2:2*N;
-index_odd = index_even-1;
-% obj = @(v) v(1); % minimize time
-obj = @(v) (sum(2+2*cos(v(index_odd+1)))+sum(v(index_even+1).^2)+sum(v((2*N+1):end)).^2)*v(1)/(N-1); % cost-to-go
+      umax*ones(N,1)];
+
+obj = @(v) objective(v,N);
 nonlincon = @(v) collocation(v,N,initial_state,m,l,g,b);
 
 options = optimoptions('fmincon','Algorithm','interior-point',...
@@ -46,6 +41,8 @@ fprintf("Objective: %3.2f.\n",fopt);
 
 %% plot solution
 uopt = vopt(2*N+2:end);
+xopt = vopt(2:2*N+1);
+xopt = reshape(xopt,2,N);
 Topt = vopt(1);
 t_grid = linspace(0,1,N)*Topt;
 figure;
@@ -55,24 +52,50 @@ xlabel('$t$','FontSize',24,'Interpreter','latex');
 ylabel('$u(t)$','FontSize',24,'Interpreter','latex');
 ax = gca; ax.FontSize = 20;
 grid on;
-
-% integrate from the initial state using the found controls
-tt = linspace(0,Topt,1000);
-[t,sol] = ode89(@(t,y) pendulum_ode(t,y,uopt,t_grid,m,l,g,b),tt,initial_state);
 figure;
-plot(tt,sol,'LineWidth',2);
+scatter(t_grid,xopt,100,'filled'); hold on;
+plot(t_grid,xopt,'LineWidth',2);
 xlabel('$t$','FontSize',24,'Interpreter','latex');
 ylabel('$x(t)$','FontSize',24,'Interpreter','latex');
-ax = gca; ax.FontSize = 20;
-legend('$x_1(t)$','$x_2(t)$','FontSize',24,'Interpreter','latex');
 grid on;
+legend('$\theta(t)$','$\dot{\theta}(t)$','FontSize',20,'Interpreter','latex');
+
+
+% % integrate from the initial state using the found controls
+% tt = linspace(0,Topt,1000);
+% [t,sol] = ode89(@(t,y) pendulum_ode(t,y,uopt,t_grid,m,l,g,b),tt,initial_state);
+% figure;
+% plot(tt,sol,'LineWidth',2);
+% xlabel('$t$','FontSize',24,'Interpreter','latex');
+% ylabel('$x(t)$','FontSize',24,'Interpreter','latex');
+% ax = gca; ax.FontSize = 20;
+% legend('$x_1(t)$','$x_2(t)$','FontSize',24,'Interpreter','latex');
+% grid on;
 
 
 %% helper functions
+function f = objective(v,N)
+T = v(1); h = T / (N-1);
+x = v(2:2*N+1); x = reshape(x,2,N);
+theta = x(1,:);
+thetadot = x(2,:);
+u = v(2*N+2:end);
+
+tmp = [cos(theta);
+       sin(theta);
+       thetadot];
+
+x_cost = sum((tmp - [-1;0;0]).^2,1);
+
+u_cost = u.^2;
+
+f = sum(x_cost(:) + u_cost(:)) * h;
+end
+
+
 function dx = pendulum(x,u,m,l,g,b)
-    dx = zeros(2,1);
-    dx(1) = x(2);
-    dx(2) = -(b*x(2)+m*g*l*sin(x(1))+u)/m/l^2;
+    dx = [x(2);
+          -1/(m*l^2) * (-u + b*x(2)+m*g*l*sin(x(1))) ];
 end
 
 function [c,ceq] = collocation(v,N,initial_state,m,l,g,b)
@@ -99,12 +122,12 @@ for k=1:N-1
     
     % collocation constraint
     ceq = [ceq;
-        dxkc - pendulum(xkc,ukc,m,l,g,b)];
+           dxkc - pendulum(xkc,ukc,m,l,g,b)];
 end
 
 ceq = [ceq;
        x(:,1) - initial_state; % initial condition
-       x(:,end)-[1;0]]; % land at target point
+       x(:,end) - [pi;0]]; % land at target point
 end
 
 function dx = pendulum_ode(t,states,u_grid,t_grid,m,l,g,b)

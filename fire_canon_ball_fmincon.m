@@ -1,7 +1,7 @@
 clc; clear; close all;
 
 g = 9.8;
-x0 = [0;0;1]; % initial guess of the solution
+x0 = [0;0;10]; % initial guess of the solution
 
 % define objective function
 obj = @(x) objective(x);

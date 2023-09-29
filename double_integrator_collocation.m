@@ -1,7 +1,7 @@
 clc; clear; close all;
 
 initial_state = [-10;0];
-N = 5;
+N = 101;
 
 T0 = 1; % initial guess on T
 x0 = randn(2,N); % initial guess on (x1,...,x_N)
