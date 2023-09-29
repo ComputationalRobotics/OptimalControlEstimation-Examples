@@ -1,9 +1,9 @@
 clc; clear; close all;
 
-m = 1; l = 1; g = 9.8; b = 0.1; umax = 2;
+m = 1; l = 1; g = 9.8; b = 0.1; umax = 1;
 initial_state = [0;0]; % start from the bottom
-N = 50;
-T0 = 6; % initial guess on T
+N = 100;
+T0 = 20; % initial guess on T
 x0 = zeros(2,N); % initial guess on (x1,...,x_N)
 u0 = zeros(N,1); % initial guess on (u1,...,u_N)
 x0(:,1) = initial_state;
@@ -21,7 +21,7 @@ v0 = [T0; x0(:); u0(:)];
 lb = [0.1;
       -Inf*ones(2*N,1);
       -umax*ones(N,1)];
-ub = [20;
+ub = [50;
       Inf*ones(2*N,1);
       umax*ones(N,1)];
 
@@ -61,16 +61,16 @@ grid on;
 legend('$\theta(t)$','$\dot{\theta}(t)$','FontSize',20,'Interpreter','latex');
 
 
-% % integrate from the initial state using the found controls
-% tt = linspace(0,Topt,1000);
-% [t,sol] = ode89(@(t,y) pendulum_ode(t,y,uopt,t_grid,m,l,g,b),tt,initial_state);
-% figure;
-% plot(tt,sol,'LineWidth',2);
-% xlabel('$t$','FontSize',24,'Interpreter','latex');
-% ylabel('$x(t)$','FontSize',24,'Interpreter','latex');
-% ax = gca; ax.FontSize = 20;
-% legend('$x_1(t)$','$x_2(t)$','FontSize',24,'Interpreter','latex');
-% grid on;
+% integrate from the initial state using the found controls
+tt = linspace(0,Topt,1000);
+[t,sol] = ode89(@(t,y) pendulum_ode(t,y,uopt,t_grid,m,l,g,b),tt,initial_state);
+figure;
+plot(tt,sol,'LineWidth',2);
+xlabel('$t$','FontSize',24,'Interpreter','latex');
+ylabel('$x(t)$','FontSize',24,'Interpreter','latex');
+ax = gca; ax.FontSize = 20;
+legend('$\theta(t)$','$\dot{\theta}(t)$','FontSize',20,'Interpreter','latex');
+grid on;
 
 
 %% helper functions
@@ -133,7 +133,8 @@ end
 function dx = pendulum_ode(t,states,u_grid,t_grid,m,l,g,b)
 u_t = interp1(t_grid,u_grid,t); % piece-wise linear
 x = states;
-    dx = zeros(2,1);
-    dx(1) = x(2);
-    dx(2) = -(b*x(2)+m*g*l*sin(x(1))+u_t)/m/l^2;
+dx = [x(2);
+      -1/(m*l^2) * (-u_t + b*x(2)+m*g*l*sin(x(1))) ];
 end
+
+
