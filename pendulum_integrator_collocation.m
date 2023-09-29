@@ -58,7 +58,7 @@ grid on;
 
 % integrate from the initial state using the found controls
 tt = linspace(0,Topt,1000);
-[t,sol] = ode89(@(t,y) double_integrator_ode(t,y,uopt,t_grid,m,l,g,b),tt,initial_state);
+[t,sol] = ode89(@(t,y) pendulum_ode(t,y,uopt,t_grid,m,l,g,b),tt,initial_state);
 figure;
 plot(tt,sol,'LineWidth',2);
 xlabel('$t$','FontSize',24,'Interpreter','latex');
@@ -107,7 +107,7 @@ ceq = [ceq;
        x(:,end)-[1;0]]; % land at target point
 end
 
-function dx = double_integrator_ode(t,states,u_grid,t_grid,m,l,g,b)
+function dx = pendulum_ode(t,states,u_grid,t_grid,m,l,g,b)
 u_t = interp1(t_grid,u_grid,t); % piece-wise linear
 x = states;
     dx = zeros(2,1);
