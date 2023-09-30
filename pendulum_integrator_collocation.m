@@ -1,9 +1,9 @@
 clc; clear; close all;
 
-m = 1; l = 1; g = 9.8; b = 0.1; umax = 1;
+m = 1; l = 1; g = 9.8; b = 0.1; umax = 5;
 initial_state = [0;0]; % start from the bottom
-N = 100;
-T0 = 20; % initial guess on T
+N = 10;
+T0 = 5; % initial guess on T
 x0 = zeros(2,N); % initial guess on (x1,...,x_N)
 u0 = zeros(N,1); % initial guess on (u1,...,u_N)
 x0(:,1) = initial_state;
@@ -62,8 +62,9 @@ legend('$\theta(t)$','$\dot{\theta}(t)$','FontSize',20,'Interpreter','latex');
 
 
 % integrate from the initial state using the found controls
-tt = linspace(0,Topt,1000);
-[t,sol] = ode89(@(t,y) pendulum_ode(t,y,uopt,t_grid,m,l,g,b),tt,initial_state);
+noise = 1.0;
+tt = linspace(0,Topt,100);
+[t,sol] = ode89(@(t,y) pendulum_ode(t,y,uopt,t_grid,m,l,g,b,noise),tt,initial_state);
 figure;
 plot(tt,sol,'LineWidth',2);
 xlabel('$t$','FontSize',24,'Interpreter','latex');
@@ -130,11 +131,12 @@ ceq = [ceq;
        x(:,end) - [pi;0]]; % land at target point
 end
 
-function dx = pendulum_ode(t,states,u_grid,t_grid,m,l,g,b)
+function dx = pendulum_ode(t,states,u_grid,t_grid,m,l,g,b,noise)
 u_t = interp1(t_grid,u_grid,t); % piece-wise linear
 x = states;
 dx = [x(2);
       -1/(m*l^2) * (-u_t + b*x(2)+m*g*l*sin(x(1))) ];
+dx = dx + noise*randn(2,1);
 end
 
 
