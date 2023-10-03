@@ -37,7 +37,7 @@ ax = gca; ax.FontSize = 20;
 x = initial_state;
 state_trajectory = [];
 time_trajectory = [];
-noise = 1.0;
+noise = 0.5;
 for k = 1:N-1
     uk = uopt(k);
     [t,sol] = ode89(@(t,y) pendulum_ode(t,y,[uk;uk],[0;h],m,l,g,b,noise),[0,h],x);
