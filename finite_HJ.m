@@ -46,8 +46,9 @@ figure;
 ax = gca; ax.FontSize = 20;
 surf(X,Y,Z);
 shading interp
-xlabel('x','FontSize',24,'Interpreter','latex');
-ylabel('t','FontSize',24,'Interpreter','latex');
+xlabel('$x$','FontSize',24,'Interpreter','latex');
+ylabel('$t$','FontSize',24,'Interpreter','latex');
+zlabel('$V(t,x)$','FontSize',24,'Interpreter','latex');
 ax = gca; ax.FontSize = 20;
 %V_t = -(x^TQx + u^TRu + V_x^Tf(x,u))
 %f(x,u) = Ax+Bu;
