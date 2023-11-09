@@ -1,7 +1,6 @@
 clc; clear; close all;
 restoredefaultpath;
 
-%% parameters of the pendulum
 m = 1; g = 9.8; l = 1; b = 0.1;
 umax = 2;
 A = [0, 1; g/l, -b/(m*l^2)];
@@ -9,16 +8,15 @@ B = [0; 1/(m*l^2)];
 Q = diag([1,1]); 
 R = 1;
 
-%% TODO: Compute K and S from LQR
-[K,S] = ;
+[K,S] = lqr(A,B,Q,R,zeros(2,1));
 
-%% Region to draw samples
 x1_lb = -0.2*pi;
 x1_ub = 0.2*pi;
 x2_lb = -0.2*pi;
 x2_ub = 0.2*pi;
 
-%% Simulate pendulum with clipped control
+
+%% Simulated pendulum with clipped control
 pendulum_sat = @(t,x) pendulum_f(x,clip(-K*x,-umax,umax),m,g,l,b);
 T = 100;
 N = 1000;
@@ -34,8 +32,10 @@ for i = 1:N
     else
         unstable = [unstable,x0];
     end
+    % figure; 
+    % plot(t,y);
 end
-% plot points
+%% plot
 figure;
 scatter(stable(1,:),stable(2,:),80,'filled','Marker','o');
 hold on
@@ -45,7 +45,7 @@ ylabel('$x_2$','Interpreter','latex','FontSize',24);
 ax = gca; ax.FontSize = 20;
 hold on
 
-%% certify ROA using SOS programming
+%% certify ROA
 sostoolspath = '../SOSTOOLS';
 mosekpath = '../../../mosek';
 addpath(genpath(sostoolspath));
@@ -55,24 +55,24 @@ x = mpvar('x',[2,1]);
 J = x'*S*x;
 eps = 0.01;
 rho = 1;
-kappa = 4; % relaxation order
-
+kappa = 4;
 prog = sosprogram(x);
+
 % case 1
 Jdot1 = - jacobian(J,x)*pendulum_poly(x,umax,m,g,l,b) - eps*(x'*x);
 set1 = [rho - J; -K*x - umax];
 [prog, rhs1] = SOSonSet(prog,x,kappa,set1);
 prog = soseq(prog, Jdot1 - rhs1);
 
-% TODO: case 2
-Jdot2 = ;
-set2 = ;
+% case 2
+Jdot2 = - jacobian(J,x)*pendulum_poly(x,-K*x,m,g,l,b) - eps*(x'*x);
+set2 = [rho - J; umax + K*x; -K*x + umax];
 [prog, rhs2] = SOSonSet(prog,x,kappa,set2);
 prog = soseq(prog, Jdot2 - rhs2);
 
-% TODO: case 3
-Jdot3 = ;
-set3 = ;
+% case 3
+Jdot3 = - jacobian(J,x)*pendulum_poly(x,-umax,m,g,l,b) - eps*(x'*x);
+set3 = [rho - J; -umax + K*x];
 [prog, rhs3] = SOSonSet(prog,x,kappa,set3);
 prog = soseq(prog, Jdot3 - rhs3);
 
@@ -86,7 +86,13 @@ legend('Stabilized','Non-Stabilized','Certified','FontSize',22);
 
 %% helper function
 function v = clip(u,a,b)
-%% TODO: implement the clip function that clips u between [a,b]
+v = u;
+if u > b
+    v = b;
+end
+if u < a
+    v = a;
+end
 end
 
 function zdot = pendulum_f(z,u,m,g,l,b)
@@ -101,7 +107,16 @@ zdot = [
 end
 
 function zdot = pendulum_poly(z,u,m,g,l,b)
-%% TODO: implement pendulum approximate polynomial dynamics
+% pendulum approximate polynomial dynamics
+z1 = z(1);
+z2 = z(2);
+
+zdot = [
+    z2;
+    1/(m*l^2)*(u - b*z2 + ...
+    m*g*l*( z1 - z1^3/(factorial(3)) + z1^5/(factorial(5))))
+];
+% 
 end
 
 function [prog,rhs] = SOSonSet(prog,var,kappa,set_ineq)
