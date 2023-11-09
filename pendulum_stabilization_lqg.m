@@ -17,7 +17,7 @@ B = dt*Bc;
 Q = diag([1,1]); 
 R = 1;
 C = [1, 0];
-sigma = 0.02;
+sigma = 0.1;
 M = diag([0,sigma^2]);
 N = sigma^2;
 
