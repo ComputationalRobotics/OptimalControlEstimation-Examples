@@ -54,7 +54,7 @@ addpath(genpath(mosekpath));
 x = mpvar('x',[2,1]);
 J = x'*S*x;
 eps = 0.01;
-rho = 1;
+rho = 2;
 kappa = 4;
 prog = sosprogram(x);
 
